@@ -1,0 +1,58 @@
+<html>
+<head>
+  <title>ALL-review</title>
+  <style type="text/css">
+  #pdf-viewer {
+    width: 50%;
+    height: 100%;
+    float: left;
+  }
+  #review-pane {
+    overflow-y: scroll;
+    padding-left: 1em;
+    height: 100%;
+  }
+  #reviews {
+    width: 100%;
+  }
+  #new-review {
+    width: 100%;
+  }
+  #new-review textarea {
+    width: 100%;
+    height: 12em;
+  }
+  .review-head {
+    background-color: antiquewhite;
+  }
+  .review-body {
+    display: block;
+    padding-bottom: 1em;
+  }
+  </style>
+</head>
+<body>
+<div id='pdf-viewer'>
+  <object data="{{path}}" type='application/pdf' width='100%' height='100%'>
+    No embedded PDF viewer available.
+    <a href="{{path}}">Click here to view</a>
+  </object>
+</div>
+<div id='review-pane'>
+<table id='reviews'>
+  <tr><th>Enter a new review &mdash; <a href='/'>Back to Papers</a></th></tr>
+  <tr><td><form id='new-review' action='/review' method='post'>
+    <textarea form='new-review' name='review'></textarea><br /><br />
+    Reviewer name: <input type='text' value='anonymous' name='author' />
+    (Text will be formatted with <a href="https://help.github.com/articles/markdown-basics/">Markdown</a>.)
+    <input type='submit' />
+    <input type='hidden' name='paper_id' value='{{paper_id}}' />
+  </form></td></tr>
+{% for review in reviews %}
+  <tr class='review-head'><th>Review by {{review['author']}} at {{review['ts']}}</th></tr>
+  <tr class='review-body'><td>{% raw markdown(review['review']) %}</td></tr>
+{% end %}
+</table>
+</div>
+</body>
+</html>

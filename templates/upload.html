@@ -1,0 +1,27 @@
+<html>
+<head>
+  <title>ALL-review</title>
+  <style type="text/css">
+  table { margin: auto; }
+  .error { color: red; }
+  input[type='text'] { width: 20em; }
+  input[type='email'] { width: 20em; }
+  input[type='submit'] { width: 100%; }
+  </style>
+</head>
+<body>
+<form action='/upload' method='post' enctype='multipart/form-data'>
+<table>
+<tr><th colspan=2>Upload a paper</th>
+<tr><td>Title</td><td><input type='text' name='title' /></td></tr>
+<tr><td>Author</td><td><input type='text' name='author' value='anonymous' /></td></tr>
+<tr><td>Contact Email</td><td><input type='email' name='email' value='' placeholder='optional' /></td></tr>
+<tr><td>PDF</td><td><input type='file' name='file' /></td></tr>
+<tr><td colspan=2><input type='submit' /></td></tr>
+{% if error %}
+<tr><td colspan=2><span class='error'>Upload error: {{escape(error)}}</span></td></tr>
+{% end %}
+</table>
+</form>
+</body>
+</html>

@@ -1,0 +1,27 @@
+<html>
+<head>
+  <title>ALL-review</title>
+  <style type="text/css">
+  table { margin: auto; border-collapse: collapse; }
+  table td { padding-right: 0.7em; padding-left: 0.3em; }
+  table td:last-child { padding-right: 0.3em; }
+  caption { font-size: x-large; font-family: sans-serif; font-weight: bold; }
+  .odd { background-color: lavender; }
+  .even { background-color: floralwhite; }
+  </style>
+</head>
+<body>
+<table>
+  <caption>ALL-review: in-house peer reviews</caption>
+  <tr><th colspan=3><a href="/upload">Upload New Paper</a></th></tr>
+  <tr><th>Title</th><th>Author</th>
+{% for i, paper in enumerate(papers) %}
+  <tr class="{{'even' if i%2==0 else 'odd'}}">
+    <td>{{escape(paper['title'])}}</td>
+    <td>{{escape(paper['author'])}}</td>
+    <td><a href="/review?p={{paper['id']}}">(re)view</a></td>
+  </tr>
+{% end %}
+</table>
+</body>
+</html>
