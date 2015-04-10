@@ -1,0 +1,26 @@
+<html>
+<head>
+  <title>ALL-review</title>
+  <style type="text/css">
+  table { margin: auto; }
+  .error { color: red; }
+  input[type='submit'] { width: 100%; }
+  </style>
+</head>
+<body>
+<form action="/login" method="post">
+<table>
+<tr><th colspan=2>Log in</th>
+<tr><td>Username</td><td><input type='text' name='user' /></td></tr>
+<tr><td>Password</td><td><input type='password' name='pw' /></td></tr>
+<tr><td colspan=2>
+<input type="hidden" value="{{next}}" name="next" />
+<input type="submit" value="Sign in" />
+</td></tr>
+{% if msg %}
+<tr><td colspan=2><span class='error'>Error: {{escape(msg)}}</span></td></tr>
+{% end %}
+</table>
+</form>
+</body>
+</html>

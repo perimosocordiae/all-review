@@ -29,6 +29,9 @@
     display: block;
     padding-bottom: 1em;
   }
+  #anon {
+    vertical-align: middle;
+  }
   </style>
 </head>
 <body>
@@ -42,14 +45,25 @@
 <table id='reviews'>
   <tr><th>Enter a new review &mdash; <a href='/'>Back to Papers</a></th></tr>
   <tr><td><form id='new-review' action='/review' method='post'>
-    <textarea form='new-review' name='review'></textarea><br /><br />
-    Reviewer name: <input type='text' value='anonymous' name='author' />
-    (Text will be formatted with <a href="https://help.github.com/articles/markdown-basics/">Markdown</a>.)
+    <textarea form='new-review' name='review'></textarea><br />
+    Reviewing as <b>{{user}}</b>
+    (<label for='anon'>review anonymously:</label>
+    <input type='checkbox' name='anonymous' id='anon' />)<br />
     <input type='submit' />
+    (Text will be formatted with
+    <a href="https://help.github.com/articles/markdown-basics/">Markdown</a>
+    .)<br />
     <input type='hidden' name='paper_id' value='{{paper_id}}' />
   </form></td></tr>
 {% for review in reviews %}
-  <tr class='review-head'><th>Review by {{review['author']}} at {{review['ts']}}</th></tr>
+  <tr class='review-head'><th>Review by
+  {% if review['anon'] %}
+    <i>anonymous</i>
+  {% else %}
+    {{review['author']}}
+  {% end %}
+  at {{review['ts'].strftime('%X on %x')}}
+  </th></tr>
   <tr class='review-body'><td>{% raw markdown(review['review']) %}</td></tr>
 {% end %}
 </table>
