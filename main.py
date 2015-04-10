@@ -27,7 +27,7 @@ class MainHandler(BaseHandler):
   def get(self):
     papers = DB_CONN.execute(
         'SELECT id,title,author,anon FROM papers ORDER BY ts DESC')
-    self.render('index.html', papers=papers)
+    self.render('index.html', papers=papers, user=self.current_user)
 
 
 class UploadHandler(BaseHandler):

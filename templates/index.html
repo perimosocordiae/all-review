@@ -8,12 +8,19 @@
   caption { font-size: x-large; font-family: sans-serif; font-weight: bold; }
   .odd { background-color: lavender; }
   .even { background-color: floralwhite; }
+  .upload {
+    background-color: bisque;
+    text-align: center;
+    font-size: larger;
+  }
   </style>
 </head>
 <body>
 <table>
   <caption>ALL-review: in-house peer reviews</caption>
-  <tr><th colspan=3><a href="/upload">Upload New Paper</a></th></tr>
+  <tr><td colspan=4 class='upload'>
+    <a href="/upload">Upload New Paper</a>
+  </td></tr>
   <tr><th>Title</th><th>Author</th>
 {% for i, paper in enumerate(papers) %}
   <tr class="{{'even' if i%2==0 else 'odd'}}">
@@ -23,7 +30,12 @@
     {% else %}
       <td>{{escape(paper['author'])}}</td>
     {% end %}
-    <td><a href="/review?p={{paper['id']}}">(re)view</a></td>
+    <td>
+      <a href="/review?p={{paper['id']}}">(re)view</a>
+      {% if paper['author'] == user %}
+        <a href='' onclick='alert("TODO: implement this");'>edit/delete</a>
+      {% end %}
+    </td>
   </tr>
 {% end %}
 </table>
