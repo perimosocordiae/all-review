@@ -3,23 +3,30 @@
   <title>ALL-review</title>
   <style type="text/css">
   table { margin: auto; border-collapse: collapse; min-width: 30em; }
+  table tr { height: 1.75em; }
   table td { padding-right: 0.7em; padding-left: 0.3em; }
-  table td:last-child { padding-right: 0.3em; }
+  table td:last-child { padding-right: 0.3em; text-align: center; }
   caption { font-size: x-large; font-family: sans-serif; font-weight: bold; }
   .odd { background-color: lavender; }
   .even { background-color: floralwhite; }
-  .upload {
-    background-color: bisque;
-    text-align: center;
-    font-size: larger;
+  .upload { height: 3em; }
+  .upload a { font-size: large; width: 50% }
+  .btn {
+    -webkit-appearance: push-button;
+    box-sizing: border-box;
+    text-decoration: inherit;
+    color: buttontext;
+    background-color: buttonface;
+    border: 1px outset buttonface;
+    padding: 2px 6px 3px;
   }
   </style>
 </head>
 <body>
 <table>
   <caption>ALL-review: in-house peer reviews</caption>
-  <tr><td colspan=4 class='upload'>
-    <a href="/upload">Upload New Paper</a>
+  <tr class='upload'><td colspan=4>
+    <a class='btn' href="/upload">Upload New Paper</a>
   </td></tr>
   <tr><th>Title</th><th>Author</th>
 {% for i, paper in enumerate(papers) %}
@@ -31,9 +38,9 @@
       <td>{{escape(paper['author'])}}</td>
     {% end %}
     <td>
-      <a href="/review?p={{paper['id']}}">(re)view</a>
+      <a class='btn' href="/review?p={{paper['id']}}">(re)view</a>
       {% if paper['author'] == user %}
-        <a href="/upload?p={{paper['id']}}">edit/delete</a>
+        <a class='btn' href="/upload?p={{paper['id']}}">edit/delete</a>
       {% end %}
     </td>
   </tr>
