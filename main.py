@@ -32,7 +32,8 @@ class MainHandler(BaseHandler):
 
 class UploadHandler(BaseHandler):
   def _render(self, error='', title='', email='', anon=False, paper_id=''):
-    self.render('upload.html', user=self.current_user, error=error,
+    verb = 'Edit' if paper_id else 'Upload'
+    self.render('upload.html', user=self.current_user, error=error, verb=verb,
                 title=title, email=email, anon=anon, paper_id=paper_id)
 
   @tornado.web.authenticated
