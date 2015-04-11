@@ -13,15 +13,16 @@
 <form action='/upload' method='post' enctype='multipart/form-data'>
 <table>
 <tr><th colspan=2>Upload a paper</th>
-<tr><td>Title</td><td><input type='text' name='title' /></td></tr>
+<tr><td>Title</td><td><input type='text' name='title' value='{{escape(title)}}'/></td></tr>
 <tr><td>Author</td><td>{{escape(user)}}</td></tr>
-<tr><td>Contact Email</td><td><input type='email' name='email' value='' placeholder='optional' /></td></tr>
+<tr><td>Contact Email</td><td><input type='email' name='email' value='{{escape(email)}}' placeholder='optional' /></td></tr>
 <tr><td>PDF</td><td><input type='file' name='file' /></td></tr>
-<tr><td>Hide Author Name?</td><td><input type='checkbox' name='anonymous' /></td></tr>
-<tr><td colspan=2><input type='submit' /></td></tr>
-{% if error %}
-<tr><td colspan=2><span class='error'>Upload error: {{escape(error)}}</span></td></tr>
-{% end %}
+<tr><td>Hide Author Name?</td><td><input type='checkbox' name='anonymous' {% if anon %}checked{% end %} /></td></tr>
+<tr><td colspan=2>
+  <input type='hidden' name='paper_id' value='{{paper_id}}'>
+  <input type='submit' />
+</td></tr>
+<tr><td colspan=2><span class='error'>{{escape(error)}}</span></td></tr>
 </table>
 </form>
 </body>

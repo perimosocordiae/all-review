@@ -31,40 +31,82 @@ class MainHandler(BaseHandler):
 
 
 class UploadHandler(BaseHandler):
-  def _render(self, error=None):
-    self.render('upload.html', user=self.current_user, error=error)
+  def _render(self, error='', title='', email='', anon=False, paper_id=''):
+    self.render('upload.html', user=self.current_user, error=error,
+                title=title, email=email, anon=anon, paper_id=paper_id)
 
   @tornado.web.authenticated
   def get(self):
-    self._render()
+    paper_id = self.get_argument('p', None)
+    if paper_id is None:
+      return self._render()
+
+    paper = DB_CONN.execute(
+        'SELECT title,author,email,anon FROM papers WHERE id = ?',
+        (paper_id,)).fetchone()
+    # Check that the paper exists, and that the user is actually the owner
+    if paper is None or paper['author'] != self.current_user:
+      self._render(error="Error: Document not found")
+    else:
+      self._render(title=paper['title'], email=paper['email'],
+                   anon=paper['anon'], paper_id=paper_id)
 
   @tornado.web.authenticated
   def post(self):
+    # Read all of the parameters
     title = self.get_argument('title')
-    if not title:
-      logging.error('No title supplied')
-      self._render('No title supplied')
-      return
-    if 'file' not in self.request.files:
-      logging.error('No file uploaded')
-      self._render('No file uploaded')
-      return
-    f = self.request.files['file'][0]
-    filename = f['filename'].lower()
-    if not filename.endswith('.pdf'):
-      logging.error('Invalid upload name: %s', f['filename'])
-      self._render('Only PDF files allowed')
-      return
-    # Hack to avoid overwriting files
-    # TODO: generate random pdf names instead.
-    while os.path.exists(os.path.join('papers', filename)):
-      filename = filename[:-4] + '_.pdf'
-    with open(os.path.join('papers', filename), 'w') as fh:
-      fh.write(f['body'])
-    # Insert row into db
-    author = self.current_user
     email = self.get_argument('email')
     anon = bool(self.get_argument('anonymous', False))
+    paper_id = self.get_argument('paper_id')
+    if 'file' not in self.request.files:
+      f = None
+    else:
+      f = self.request.files['file'][0]
+    # Dispatch to the upload/edit handler
+    if paper_id:
+      self.handle_edit(title, email, anon, f, paper_id)
+    else:
+      self.handle_upload(title, email, anon, f)
+
+  def handle_edit(self, title, email, anon, f, paper_id):
+    # Update this paper's row in the db
+    stamp = datetime.datetime.now()
+    if f is None:
+      # Only updating metadata.
+      with DB_CONN as c:
+        c.execute('UPDATE papers SET title = ?, email = ?, anon = ?, ts = ? '
+                  'WHERE id = ?',
+                  (title, email, anon, stamp, paper_id))
+    else:
+      # We have a new uploaded file: save, then update.
+      filename = save_uploaded_file(f)
+      with DB_CONN as c:
+        c.execute('UPDATE papers '
+                  'SET title = ?, filename = ?, email = ?, anon = ?, ts = ? '
+                  'WHERE id = ?',
+                  (title, filename, email, anon, stamp, paper_id))
+    # Redirect to index on success
+    self.redirect('/')
+
+  def handle_upload(self, title, email, anon, f):
+    if not title:
+      logging.error('No title supplied')
+      self._render(error='Error: No title supplied', email=email, anon=anon)
+      return
+    if not f:
+      logging.error('No file uploaded')
+      self._render(error='Error: No file uploaded',
+                   title=title, email=email, anon=anon)
+      return
+    if f['filename'][-4:].lower() != '.pdf':
+      logging.error('Invalid upload name: %s', f['filename'])
+      self._render(error='Error: Only PDF files allowed',
+                   title=title, email=email, anon=anon)
+      return
+    # Save the paper
+    filename = save_uploaded_file(f)
+    # Insert row into db
+    author = self.current_user
     stamp = datetime.datetime.now()
     with DB_CONN as c:
       c.execute('INSERT INTO papers VALUES (?, ?, ?, ?, ?, ?, ?)',
@@ -78,12 +120,14 @@ class ReviewHandler(BaseHandler):
   def get(self):
     paper_id = self.get_argument('p')
     if not paper_id:
-      self.redirect('/')
-    paper = DB_CONN.execute('SELECT filepath FROM papers WHERE id = ?',
-                            paper_id).fetchone()
+      return self.redirect('/')
+    paper = DB_CONN.execute('SELECT filename FROM papers WHERE id = ?',
+                            (paper_id,)).fetchone()
+    if not paper:
+      return self.redirect('/')
     reviews = DB_CONN.execute(
-        'SELECT * FROM reviews WHERE pid = ? ORDER BY ts DESC', paper_id)
-    self.render('review.html', path=paper['filepath'], paper_id=paper_id,
+        'SELECT * FROM reviews WHERE pid = ? ORDER BY ts DESC', (paper_id,))
+    self.render('review.html', path=paper['filename'], paper_id=paper_id,
                 reviews=reviews, markdown=markdown.markdown,
                 user=self.current_user)
 
@@ -117,6 +161,19 @@ class LoginHandler(BaseHandler):
       self.redirect('/login?msg=Login%20failed')
 
 
+def save_uploaded_file(f):
+  '''f is the upload object from a POST request.'''
+  # Hack to avoid overwriting files
+  # TODO: generate random pdf names instead, or use an md5sum.
+  filename = f['filename']
+  while os.path.exists(os.path.join('papers', filename)):
+    filename = filename[:-4] + '_.pdf'
+  # write it
+  with open(os.path.join('papers', filename), 'w') as fh:
+    fh.write(f['body'])
+  return filename
+
+
 def start_server(application, port):
   socks = bind_sockets(port, 'localhost', family=socket.AF_INET)
   port = socks[0].getsockname()[1]
@@ -135,7 +192,7 @@ def initialize_db(dbname='reviews.db'):
   if not resuming:
     with DB_CONN as c:
       c.execute('CREATE TABLE papers ('
-                'id integer primary key, title text, filepath text, '
+                'id integer primary key, title text, filename text, '
                 'author text, email text, anon integer, ts timestamp)')
       c.execute('CREATE TABLE reviews (id integer primary key, pid integer, '
                 'author text, review text, anon integer, ts timestamp)')

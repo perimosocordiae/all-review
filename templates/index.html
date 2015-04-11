@@ -33,7 +33,7 @@
     <td>
       <a href="/review?p={{paper['id']}}">(re)view</a>
       {% if paper['author'] == user %}
-        <a href='' onclick='alert("TODO: implement this");'>edit/delete</a>
+        <a href="/upload?p={{paper['id']}}">edit/delete</a>
       {% end %}
     </td>
   </tr>
