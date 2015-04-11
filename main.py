@@ -58,18 +58,30 @@ class UploadHandler(BaseHandler):
     title = self.get_argument('title')
     email = self.get_argument('email')
     anon = bool(self.get_argument('anonymous', False))
+    delete = bool(self.get_argument('delete', False))
     paper_id = self.get_argument('paper_id')
     if 'file' not in self.request.files:
       f = None
     else:
       f = self.request.files['file'][0]
-    # Dispatch to the upload/edit handler
-    if paper_id:
+    # Dispatch to the upload/edit/delete handlers
+    if delete:
+      self.handle_delete(paper_id)
+    elif paper_id:
       self.handle_edit(title, email, anon, f, paper_id)
     else:
       self.handle_upload(title, email, anon, f)
 
+  def handle_delete(self, paper_id):
+    logging.info('Deleting paper %s', paper_id)
+    with DB_CONN as c:
+      c.execute('DELETE FROM papers WHERE id = ?', (paper_id,))
+      c.execute('DELETE FROM reviews WHERE pid = ?', (paper_id,))
+    # Redirect to index on success
+    self.redirect('/')
+
   def handle_edit(self, title, email, anon, f, paper_id):
+    logging.info('Editing paper %s', paper_id)
     # Update this paper's row in the db
     stamp = datetime.datetime.now()
     if f is None:
@@ -113,6 +125,7 @@ class UploadHandler(BaseHandler):
       c.execute('INSERT INTO papers VALUES (?, ?, ?, ?, ?, ?, ?)',
                 (None, title, filename, author, email, anon, stamp))
     # Redirect to index on success
+    logging.info('Uploaded new paper to %s', filename)
     self.redirect('/')
 
 

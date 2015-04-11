@@ -17,10 +17,13 @@
 <tr><td>Author</td><td>{{escape(user)}}</td></tr>
 <tr><td>Contact Email</td><td><input type='email' name='email' value='{{escape(email)}}' placeholder='optional' /></td></tr>
 <tr><td>PDF</td><td><input type='file' name='file' /></td></tr>
-<tr><td>Hide Author Name?</td><td><input type='checkbox' name='anonymous' {% if anon %}checked{% end %} /></td></tr>
+<tr><td>Hide author name</td><td><input type='checkbox' name='anonymous' {% if anon %}checked{% end %} /></td></tr>
+{% if paper_id %}
+<tr><td>Delete paper</td><td><input type='checkbox' name='delete' /></td></tr>
+{% end %}
 <tr><td colspan=2>
   <input type='hidden' name='paper_id' value='{{paper_id}}' />
-  <input type='submit' name='upload' value='{{verb}}' />
+  <input type='submit' name='upload' value='{{verb}} Paper' />
 </td></tr>
 <tr><td colspan=2><span class='error'>{{escape(error)}}</span></td></tr>
 </table>
