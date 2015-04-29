@@ -17,6 +17,7 @@ Install these with `pip install`:
 
 ## TODO list
 
+ * add a way to edit personal user info
  * add a way to reply to reviews?
  * generate random PDF names when saving to disk
  * add email notifications when reviews and papers are made or updated
