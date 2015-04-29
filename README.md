@@ -17,5 +17,4 @@ Install these with `pip install`:
 
 ## TODO list
 
- * implement the edit/delete option for reviews
  * add a way to reply to reviews?

@@ -130,9 +130,19 @@ class UploadHandler(BaseHandler):
 
 
 class ReviewHandler(BaseHandler):
+  def _render(self, paper, reviews, review=None):
+    user = DB_CONN.execute('SELECT displayname FROM users WHERE username = ?',
+                           (self.current_user,)).fetchone()
+    if review is None:
+      review = dict(id='', review='')
+    self.render('review.html', paper=paper, reviews=reviews,
+                review=review, displayname=user['displayname'],
+                user=self.current_user, markdown=markdown.markdown)
+
   @tornado.web.authenticated
   def get(self):
     paper_id = self.get_argument('p')
+    review_id = int(self.get_argument('r', -1))
     if not paper_id:
       return self.redirect('/')
     paper = DB_CONN.execute(
@@ -141,27 +151,41 @@ class ReviewHandler(BaseHandler):
         (paper_id,)).fetchone()
     if not paper:
       return self.redirect('/')
-    user = DB_CONN.execute('SELECT displayname FROM users WHERE username = ?',
-                           (self.current_user,)).fetchone()
     reviews = DB_CONN.execute(
         'SELECT id,review,author,anon,ts,displayname FROM reviews, users '
         'WHERE reviews.author = users.username AND pid = ? ORDER BY ts DESC',
-        (paper_id,))
-    self.render('review.html', paper=paper, reviews=reviews, review_id='',
-                user=self.current_user, markdown=markdown.markdown,
-                displayname=user['displayname'])
+        (paper_id,)).fetchall()
+    if review_id < 0:
+      return self._render(paper, reviews)
+    # Hack: manually search the reviews to get the one we want.
+    for r in reviews:
+      if r['id'] == review_id and r['author'] == self.current_user:
+        return self._render(paper, reviews, review=r)
+    # No review was found with the right id + owner combo.
+    self._render(paper, reviews)
 
   @tornado.web.authenticated
   def post(self):
     paper_id = int(self.get_argument('paper_id'))
+    review_id = self.get_argument('review_id')
+    review_id = int(review_id) if review_id else None
     review = self.get_argument('review')
     author = self.current_user
     anon = bool(self.get_argument('anonymous', False))
-    if review:
-      stamp = datetime.datetime.now()
-      with DB_CONN as c:
-        c.execute('INSERT INTO reviews VALUES (?, ?, ?, ?, ?, ?)',
-                  (None, paper_id, author, review, anon, stamp))
+    stamp = datetime.datetime.now()
+    with DB_CONN as c:
+      if review:
+        if review_id is None:
+          # Insert a new review
+          c.execute('INSERT INTO reviews VALUES (?, ?, ?, ?, ?, ?)',
+                    (None, paper_id, author, review, anon, stamp))
+        else:
+          # Update an existing review
+          c.execute('UPDATE reviews SET review = ?, anon = ?, ts = ? '
+                    'WHERE id = ?', (review, anon, stamp, review_id,))
+      elif review_id is not None:
+        # Delete an existing review
+        c.execute('DELETE FROM reviews WHERE id = ?', (review_id,))
     self.redirect('/review?p=%d' % paper_id)
 
 

@@ -68,7 +68,7 @@
 </div>
 
 <form id='new-review' action='/review' method='post'>
-  <textarea form='new-review' name='review'></textarea>
+  <textarea form='new-review' name='review'>{{review['review']}}</textarea>
   <div id='submit-review'>
     <input type='submit' value='Submit Review' /> as
     <div style='display: inline;'>
@@ -84,27 +84,27 @@
     .)
   </div>
   <input type='hidden' name='paper_id' value="{{paper['id']}}" />
-  <input type='hidden' name='review_id' value="{{review_id}}" />
+  <input type='hidden' name='review_id' value="{{review['id']}}" />
 </form>
 
 <table id='reviews'>
-{% for review in reviews %}
+{% for r in reviews %}
   <tr class='review-head'><th>
-  {% if review['author'] == user %}
-    <a class='review-edit' href="/review?r={{review['id']}}">
+  {% if r['author'] == user %}
+    <a class='review-edit' href="/review?p={{paper['id']}}&r={{r['id']}}">
   {% end %}
   Review by
-  {% if review['anon'] %}
+  {% if r['anon'] %}
     <i>anonymous</i>
   {% else %}
-    {{review['displayname']}}
+    {{r['displayname']}}
   {% end %}
-  at {{review['ts'].strftime('%X on %x')}}
-  {% if review['author'] == user %}
+  at {{r['ts'].strftime('%X on %x')}}
+  {% if r['author'] == user %}
     </a>
   {% end %}
   </th></tr>
-  <tr class='review-body'><td>{% raw markdown(review['review']) %}</td></tr>
+  <tr class='review-body'><td>{% raw markdown(r['review']) %}</td></tr>
 {% end %}
 </table>
 
