@@ -3,24 +3,24 @@
   <title>ALL-review</title>
   <style type="text/css">
   table { margin: auto; }
-  .error { color: red; }
+  .error { color: red; text-align: center; }
   input[type='submit'] { width: 100%; }
   </style>
 </head>
 <body>
+{% if msg %}
+<div class='error'>{{msg}}</div>
+{% end %}
 <form action="/login" method="post">
 <table>
-<tr><th colspan=2>Log in</th>
-<tr><td>Username</td><td><input type='text' name='user' /></td></tr>
+<tr><td>Username</td><td><input type='text' name='user' maxlength=48 /></td></tr>
 <tr><td>Password</td><td><input type='password' name='pw' /></td></tr>
-<tr><td colspan=2>
-<input type="hidden" value="{{next}}" name="next" />
-<input type="submit" value="Sign in" />
-</td></tr>
-{% if msg %}
-<tr><td colspan=2><span class='error'>{{msg}}</span></td></tr>
-{% end %}
+<tr><td colspan=2 style="text-align: center">&mdash; and, if signing up &mdash;</td></tr>
+<tr><td>Display Name</td><td><input type='text' name='displayname' /></td></tr>
+<tr><td>Email</td><td><input type='email' name='email' placeholder='optional' /></td></tr>
+<tr><td colspan=2><input type="submit" value="Log in / Sign up" /></td>
 </table>
+<input type="hidden" value="{{next}}" name="next" />
 </form>
 </body>
 </html>

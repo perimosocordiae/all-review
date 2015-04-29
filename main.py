@@ -4,12 +4,13 @@ import datetime
 import logging
 import markdown
 import os.path
+import re
 import socket
 import sqlite3
-import tornado.web
 import tornado.template
-from tornado.httpserver import HTTPServer
+import tornado.web
 from tornado.escape import url_escape
+from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
 from tornado.netutil import bind_sockets
 from tornado.options import define, options, parse_command_line
@@ -198,17 +199,41 @@ class LoginHandler(BaseHandler):
   def post(self):
     username = self.get_argument('user')
     raw_password = self.get_argument('pw')
+    displayname = self.get_argument('displayname')
+    email = self.get_argument('email')
     next_url = self.get_argument('next', '/')
+    # Find a user with the given username
     user = DB_CONN.execute(
-        'SELECT hashed_password FROM users WHERE username = ?',
+        'SELECT hashed_password FROM users WHERE username = ? LIMIT 1',
         (username,)).fetchone()
-    if user and bcrypt.checkpw(raw_password, user['hashed_password']):
-      self.set_secure_cookie('user', username)
-      self.redirect(next_url)
+    if displayname:
+      # This is a signup attempt.
+      if user:
+        logging.info('Signup failed due to username conflict: %r', username)
+        self.redirect('/login?next=%s&msg=%s' % (
+            url_escape(next_url), url_escape('Error: Username taken')))
+      elif len(username) > 50 or re.match(r'[^0-9a-z]', username, re.I):
+        logging.info('Signup failed due to invalid username: %r', username)
+        self.redirect('/login?next=%s&msg=%s' % (
+            url_escape(next_url), url_escape('Error: Invalid username')))
+      else:
+        logging.info('Signing up new user: %r', username)
+        with DB_CONN as c:
+          c.execute('INSERT INTO users VALUES (?, ?, ?, ?)',
+                    (username, email, displayname,
+                     bcrypt.hashpw(raw_password, bcrypt.gensalt())))
+        self.set_secure_cookie('user', username)
+        self.redirect(next_url)
     else:
-      self.clear_cookie('user')
-      self.redirect('/login?next=%s&msg=%s' % (
-          url_escape(next_url), url_escape('Error: Login failed')))
+      # Regular login attempt.
+      if user and bcrypt.checkpw(raw_password, user['hashed_password']):
+        logging.info('Logging in user %r', username)
+        self.set_secure_cookie('user', username)
+        self.redirect(next_url)
+      else:
+        logging.info('Login failed for user %r', username)
+        self.redirect('/login?next=%s&msg=%s' % (
+            url_escape(next_url), url_escape('Error: Login failed')))
 
 
 class LogoutHandler(BaseHandler):
