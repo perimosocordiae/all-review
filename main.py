@@ -32,10 +32,12 @@ class MainHandler(BaseHandler):
 
 
 class UploadHandler(BaseHandler):
-  def _render(self, error='', title='', email='', anon=False, paper_id=''):
+  def _render(self, error='', title='', anon=False, paper_id=''):
     verb = 'Edit' if paper_id else 'Upload'
-    self.render('upload.html', user=self.current_user, error=error, verb=verb,
-                title=title, email=email, anon=anon, paper_id=paper_id)
+    user = DB_CONN.execute('SELECT displayname FROM users WHERE username = ?',
+                           (self.current_user,)).fetchone()
+    self.render('upload.html', user=user['displayname'], error=error, verb=verb,
+                title=title, anon=anon, paper_id=paper_id)
 
   @tornado.web.authenticated
   def get(self):
@@ -44,20 +46,18 @@ class UploadHandler(BaseHandler):
       return self._render()
 
     paper = DB_CONN.execute(
-        'SELECT title,author,email,anon FROM papers WHERE id = ?',
+        'SELECT title,author,anon FROM papers WHERE id = ?',
         (paper_id,)).fetchone()
     # Check that the paper exists, and that the user is actually the owner
     if paper is None or paper['author'] != self.current_user:
       self._render(error="Error: Document not found")
     else:
-      self._render(title=paper['title'], email=paper['email'],
-                   anon=paper['anon'], paper_id=paper_id)
+      self._render(title=paper['title'], anon=paper['anon'], paper_id=paper_id)
 
   @tornado.web.authenticated
   def post(self):
     # Read all of the parameters
     title = self.get_argument('title')
-    email = self.get_argument('email')
     anon = bool(self.get_argument('anonymous', False))
     delete = bool(self.get_argument('delete', False))
     paper_id = self.get_argument('paper_id')
@@ -69,9 +69,9 @@ class UploadHandler(BaseHandler):
     if delete:
       self.handle_delete(paper_id)
     elif paper_id:
-      self.handle_edit(title, email, anon, f, paper_id)
+      self.handle_edit(title, anon, f, paper_id)
     else:
-      self.handle_upload(title, email, anon, f)
+      self.handle_upload(title, anon, f)
 
   def handle_delete(self, paper_id):
     logging.info('Deleting paper %s', paper_id)
@@ -81,41 +81,39 @@ class UploadHandler(BaseHandler):
     # Redirect to index on success
     self.redirect('/')
 
-  def handle_edit(self, title, email, anon, f, paper_id):
+  def handle_edit(self, title, anon, f, paper_id):
     logging.info('Editing paper %s', paper_id)
     # Update this paper's row in the db
     stamp = datetime.datetime.now()
     if f is None:
       # Only updating metadata.
       with DB_CONN as c:
-        c.execute('UPDATE papers SET title = ?, email = ?, anon = ?, ts = ? '
-                  'WHERE id = ?',
-                  (title, email, anon, stamp, paper_id))
+        c.execute('UPDATE papers SET title = ?, anon = ?, ts = ? WHERE id = ?',
+                  (title, anon, stamp, paper_id))
     else:
       # We have a new uploaded file: save, then update.
       filename = save_uploaded_file(f)
       with DB_CONN as c:
         c.execute('UPDATE papers '
-                  'SET title = ?, filename = ?, email = ?, anon = ?, ts = ? '
-                  'WHERE id = ?',
-                  (title, filename, email, anon, stamp, paper_id))
+                  'SET title = ?, filename = ?, anon = ?, ts = ? WHERE id = ?',
+                  (title, filename, anon, stamp, paper_id))
     # Redirect to index on success
     self.redirect('/')
 
-  def handle_upload(self, title, email, anon, f):
+  def handle_upload(self, title, anon, f):
     if not title:
       logging.error('No title supplied')
-      self._render(error='Error: No title supplied', email=email, anon=anon)
+      self._render(error='Error: No title supplied', anon=anon)
       return
     if not f:
       logging.error('No file uploaded')
       self._render(error='Error: No file uploaded',
-                   title=title, email=email, anon=anon)
+                   title=title, anon=anon)
       return
     if f['filename'][-4:].lower() != '.pdf':
       logging.error('Invalid upload name: %s', f['filename'])
       self._render(error='Error: Only PDF files allowed',
-                   title=title, email=email, anon=anon)
+                   title=title, anon=anon)
       return
     # Save the paper
     filename = save_uploaded_file(f)
@@ -123,8 +121,8 @@ class UploadHandler(BaseHandler):
     author = self.current_user
     stamp = datetime.datetime.now()
     with DB_CONN as c:
-      c.execute('INSERT INTO papers VALUES (?, ?, ?, ?, ?, ?, ?)',
-                (None, title, filename, author, email, anon, stamp))
+      c.execute('INSERT INTO papers VALUES (?, ?, ?, ?, ?, ?)',
+                (None, title, filename, author, anon, stamp))
     # Redirect to index on success
     logging.info('Uploaded new paper to %s', filename)
     self.redirect('/')

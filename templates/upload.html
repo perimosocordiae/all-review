@@ -5,7 +5,6 @@
   table { margin: auto; }
   .error { color: red; }
   input[type='text'] { width: 20em; }
-  input[type='email'] { width: 20em; }
   input[type='submit'] { width: 100%; }
   </style>
 </head>
@@ -15,7 +14,6 @@
 <tr><th colspan=2>{{verb}} a paper</th>
 <tr><td>Title</td><td><input type='text' name='title' value='{{escape(title)}}'/></td></tr>
 <tr><td>Author</td><td>{{escape(user)}}</td></tr>
-<tr><td>Contact Email</td><td><input type='email' name='email' value='{{escape(email)}}' placeholder='optional' /></td></tr>
 <tr><td>PDF</td><td><input type='file' name='file' /></td></tr>
 <tr><td>Hide author name</td><td><input type='checkbox' name='anonymous' {% if anon %}checked{% end %} /></td></tr>
 {% if paper_id %}
