@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import bcrypt
 import datetime
 import logging
 import markdown
@@ -166,8 +167,11 @@ class LoginHandler(BaseHandler):
 
   def post(self):
     username = self.get_argument('user')
-    password = self.get_argument('pw')
-    if password == 'bellman':  # Elite security
+    raw_password = self.get_argument('pw')
+    user = DB_CONN.execute(
+        'SELECT hashed_password FROM users WHERE username = ?',
+        (username,)).fetchone()
+    if user and bcrypt.checkpw(raw_password, user['hashed_password']):
       self.set_secure_cookie('user', username)
       self.redirect(self.get_argument('next', '/'))
     else:
@@ -192,6 +196,8 @@ def start_server(application, port):
   socks = bind_sockets(port, 'localhost', family=socket.AF_INET)
   port = socks[0].getsockname()[1]
   loop = IOLoop.instance()
+  # TODO: enable HTTPS by supplying the ssl_options kwarg here
+  # http://stackoverflow.com/a/18307308/10601
   server = HTTPServer(application, io_loop=loop)
   server.add_sockets(socks)
   server.start()
@@ -207,9 +213,11 @@ def initialize_db(dbname='reviews.db'):
     with DB_CONN as c:
       c.execute('CREATE TABLE papers ('
                 'id integer primary key, title text, filename text, '
-                'author text, email text, anon integer, ts timestamp)')
+                'author text, anon integer, ts timestamp)')
       c.execute('CREATE TABLE reviews (id integer primary key, pid integer, '
                 'author text, review text, anon integer, ts timestamp)')
+      c.execute('CREATE TABLE users (username text, email text, '
+                'displayname text, hashed_password text)')
 
 
 def main():

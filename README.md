@@ -12,6 +12,7 @@ Install these with `pip install`:
 
  * tornado
  * markdown
+ * py-bcrypt
 
 
 ## TODO list
