@@ -10,7 +10,6 @@
   .odd { background-color: lavender; }
   .even { background-color: floralwhite; }
   .upload { height: 3em; }
-  .upload a { font-size: large; width: 50% }
   .btn {
     -webkit-appearance: push-button;
     box-sizing: border-box;
@@ -26,7 +25,8 @@
 <table>
   <caption>ALL-review: in-house peer reviews</caption>
   <tr class='upload'><td colspan=4>
-    <a class='btn' href="/upload">Upload New Paper</a>
+    <a class='btn' href="/upload" style="width: 50%">Upload New Paper</a>
+    <a class='btn' href="/logout" style="width: initial">Log Out</a>
   </td></tr>
   <tr><th>Title</th><th>Author</th>
 {% for i, paper in enumerate(papers) %}

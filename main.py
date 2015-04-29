@@ -9,6 +9,7 @@ import sqlite3
 import tornado.web
 import tornado.template
 from tornado.httpserver import HTTPServer
+from tornado.escape import url_escape
 from tornado.ioloop import IOLoop
 from tornado.netutil import bind_sockets
 from tornado.options import define, options, parse_command_line
@@ -197,15 +198,23 @@ class LoginHandler(BaseHandler):
   def post(self):
     username = self.get_argument('user')
     raw_password = self.get_argument('pw')
+    next_url = self.get_argument('next', '/')
     user = DB_CONN.execute(
         'SELECT hashed_password FROM users WHERE username = ?',
         (username,)).fetchone()
     if user and bcrypt.checkpw(raw_password, user['hashed_password']):
       self.set_secure_cookie('user', username)
-      self.redirect(self.get_argument('next', '/'))
+      self.redirect(next_url)
     else:
       self.clear_cookie('user')
-      self.redirect('/login?msg=Login%20failed')
+      self.redirect('/login?next=%s&msg=%s' % (
+          url_escape(next_url), url_escape('Error: Login failed')))
+
+
+class LogoutHandler(BaseHandler):
+  def get(self):
+    self.clear_cookie('user')
+    self.redirect('/login?msg=' + url_escape('Logged out'))
 
 
 def save_uploaded_file(f):
@@ -258,6 +267,7 @@ def main():
       (r'/upload', UploadHandler),
       (r'/review', ReviewHandler),
       (r'/login', LoginHandler),
+      (r'/logout', LogoutHandler),
       (r'/(.*\.pdf)', tornado.web.StaticFileHandler,
           dict(path=os.path.join(webserver_dir, 'papers'))),
   ],
