@@ -31,11 +31,11 @@
   <tr><th>Title</th><th>Author</th>
 {% for i, paper in enumerate(papers) %}
   <tr class="{{'even' if i%2==0 else 'odd'}}">
-    <td>{{escape(paper['title'])}}</td>
+    <td>{{paper['title']}}</td>
     {% if paper['anon'] %}
       <td><i>anonymous</i></td>
     {% else %}
-      <td>{{escape(paper['displayname'])}}</td>
+      <td>{{paper['displayname']}}</td>
     {% end %}
     <td>
       <a class='btn' href="/review?p={{paper['id']}}">(re)view</a>

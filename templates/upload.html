@@ -12,8 +12,8 @@
 <form action='/upload' method='post' enctype='multipart/form-data'>
 <table>
 <tr><th colspan=2>{{verb}} a paper</th>
-<tr><td>Title</td><td><input type='text' name='title' value='{{escape(title)}}'/></td></tr>
-<tr><td>Author</td><td>{{escape(user)}}</td></tr>
+<tr><td>Title</td><td><input type='text' name='title' value='{{title}}'/></td></tr>
+<tr><td>Author</td><td>{{user}}</td></tr>
 <tr><td>PDF</td><td><input type='file' name='file' /></td></tr>
 <tr><td>Hide author name</td><td><input type='checkbox' name='anonymous' {% if anon %}checked{% end %} /></td></tr>
 {% if paper_id %}
@@ -23,7 +23,7 @@
   <input type='hidden' name='paper_id' value='{{paper_id}}' />
   <input type='submit' name='upload' value='{{verb}} Paper' />
 </td></tr>
-<tr><td colspan=2><span class='error'>{{escape(error)}}</span></td></tr>
+<tr><td colspan=2><span class='error'>{{error}}</span></td></tr>
 </table>
 </form>
 </body>
