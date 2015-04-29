@@ -135,15 +135,21 @@ class ReviewHandler(BaseHandler):
     paper_id = self.get_argument('p')
     if not paper_id:
       return self.redirect('/')
-    paper = DB_CONN.execute('SELECT filename FROM papers WHERE id = ?',
-                            (paper_id,)).fetchone()
+    paper = DB_CONN.execute(
+        'SELECT id,title,anon,filename,displayname FROM papers, users '
+        'WHERE papers.author = users.username AND id = ?',
+        (paper_id,)).fetchone()
     if not paper:
       return self.redirect('/')
+    user = DB_CONN.execute('SELECT displayname FROM users WHERE username = ?',
+                           (self.current_user,)).fetchone()
     reviews = DB_CONN.execute(
-        'SELECT * FROM reviews WHERE pid = ? ORDER BY ts DESC', (paper_id,))
-    self.render('review.html', path=paper['filename'], paper_id=paper_id,
-                reviews=reviews, markdown=markdown.markdown,
-                user=self.current_user)
+        'SELECT id,review,author,anon,ts,displayname FROM reviews, users '
+        'WHERE reviews.author = users.username AND pid = ? ORDER BY ts DESC',
+        (paper_id,))
+    self.render('review.html', paper=paper, reviews=reviews, review_id='',
+                user=self.current_user, markdown=markdown.markdown,
+                displayname=user['displayname'])
 
   @tornado.web.authenticated
   def post(self):

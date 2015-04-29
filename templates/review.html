@@ -12,11 +12,15 @@
     padding-left: 1em;
     height: 100%;
   }
+  #header {
+    text-align: center;
+  }
   #reviews {
     width: 100%;
   }
   #new-review {
     width: 100%;
+    margin: 0.5em 0;
   }
   #new-review textarea {
     width: 100%;
@@ -25,56 +29,85 @@
   .review-head {
     background-color: antiquewhite;
   }
-  .review-edit {
-    background-color: darkseagreen;
-    text-align: right;
-    font-size: small;
-  }
   .review-body {
     display: block;
-    padding-bottom: 1em;
   }
   #anon {
     vertical-align: middle;
+  }
+  code {
+    white-space: pre;
+  }
+  #submit-review {
+    float: left;
+    padding-bottom: 1em;
+  }
+  #editing-note {
+    font-size: small;
+    float: right;
   }
   </style>
 </head>
 <body>
 <div id='pdf-viewer'>
-  <object data="{{path}}" type='application/pdf' width='100%' height='100%'>
+  <object data="{{paper['filename']}}" type='application/pdf' width='100%' height='100%'>
     No embedded PDF viewer available.
-    <a href="{{path}}">Click here to view</a>
+    <a href="{{paper['filename']}}">Click here to view</a>
   </object>
 </div>
 <div id='review-pane'>
-<table id='reviews'>
-  <tr><th>Enter a new review &mdash; <a href='/'>Back to Papers</a></th></tr>
-  <tr><td><form id='new-review' action='/review' method='post'>
-    <textarea form='new-review' name='review'></textarea><br />
-    Reviewing as <b>{{user}}</b>
-    (<label for='anon'>review anonymously:</label>
-    <input type='checkbox' name='anonymous' id='anon' />)<br />
-    <input type='submit' />
+
+<div id='header'>
+  Reviewing <b>{{paper['title']}}</b> by
+  {% if paper['anon'] %}
+    <i>anonymous</i>
+  {% else %}
+    {{paper['displayname']}}
+  {% end %}
+  &mdash; <a href='/'>Back to Papers</a>
+</div>
+
+<form id='new-review' action='/review' method='post'>
+  <textarea form='new-review' name='review'></textarea>
+  <div id='submit-review'>
+    <input type='submit' value='Submit Review' /> as
+    <div style='display: inline;'>
+      <input id='named' name='anonymous' value='' type='radio' checked>
+      <label for='named' onclick=''>{{displayname}}</label>
+      <input id='anon' name='anonymous' value='anon' type='radio'>
+      <label for='anon' onclick=''>anonymous</label>
+    </div>
+  </div>
+  <div id='editing-note'>
     (Text will be formatted with
     <a href="https://help.github.com/articles/markdown-basics/">Markdown</a>
-    .)<br />
-    <input type='hidden' name='paper_id' value='{{paper_id}}' />
-  </form></td></tr>
+    .)
+  </div>
+  <input type='hidden' name='paper_id' value="{{paper['id']}}" />
+  <input type='hidden' name='review_id' value="{{review_id}}" />
+</form>
+
+<table id='reviews'>
 {% for review in reviews %}
-  <tr class='review-head'><th>Review by
+  <tr class='review-head'><th>
+  {% if review['author'] == user %}
+    <a class='review-edit' href="/review?r={{review['id']}}">
+  {% end %}
+  Review by
   {% if review['anon'] %}
     <i>anonymous</i>
   {% else %}
-    {{review['author']}}
+    {{review['displayname']}}
   {% end %}
   at {{review['ts'].strftime('%X on %x')}}
-  </th></tr>
   {% if review['author'] == user %}
-    <tr class='review-edit'><td>TODO: edit/delete buttons here</td></tr>
+    </a>
   {% end %}
+  </th></tr>
   <tr class='review-body'><td>{% raw markdown(review['review']) %}</td></tr>
 {% end %}
 </table>
+
 </div>
 </body>
 </html>
