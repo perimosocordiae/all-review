@@ -27,7 +27,8 @@ class MainHandler(BaseHandler):
   @tornado.web.authenticated
   def get(self):
     papers = DB_CONN.execute(
-        'SELECT id,title,author,anon FROM papers ORDER BY ts DESC')
+        'SELECT id,title,author,anon,displayname FROM papers, users '
+        'WHERE papers.author = users.username ORDER BY ts DESC')
     self.render('index.html', papers=papers, user=self.current_user)
 
 

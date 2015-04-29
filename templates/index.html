@@ -35,7 +35,7 @@
     {% if paper['anon'] %}
       <td><i>anonymous</i></td>
     {% else %}
-      <td>{{escape(paper['author'])}}</td>
+      <td>{{escape(paper['displayname'])}}</td>
     {% end %}
     <td>
       <a class='btn' href="/review?p={{paper['id']}}">(re)view</a>
