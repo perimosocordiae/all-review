@@ -29,9 +29,6 @@
   .review-head {
     background-color: antiquewhite;
   }
-  .review-body {
-    display: block;
-  }
   #anon {
     vertical-align: middle;
   }
@@ -48,6 +45,13 @@
   }
   .collapser {
     color: gray;
+    font-family: monospace;
+  }
+  .left {
+    text-align: left;
+  }
+  .right {
+    text-align: right;
   }
   </style>
   <script type="text/javascript">
@@ -55,7 +59,7 @@
     var tags = document.getElementsByClassName(cls);
     var link = tags[0], elem = tags[1];
     if (elem.style.display == 'none') {
-      elem.style.display = 'initial';
+      elem.style.display = 'table-row';
       link.innerHTML = '[-]';
     } else {
       elem.style.display = 'none';
@@ -105,12 +109,12 @@
 
 <table id='reviews'>
 {% for r in reviews %}
-  <tr class='review-head'><th>
-  <a class='collapser r{{r['id']}}' href='javascript:collapse("r{{r['id']}}");'>[-]</a>
+  <tr class='review-head'><th class='left'>
+  <a class='collapser r{{r['id']}}'
+     href='javascript:collapse("r{{r['id']}}");'>[-]</a>
   {% if r['author'] == user %}
     <a class='review-edit' href="/review?p={{paper['id']}}&r={{r['id']}}">
   {% end %}
-  Review by
   {% if r['anon'] %}
     <i>anonymous</i>
   {% else %}
@@ -119,13 +123,15 @@
   {% if paper['author'] == r['author'] %}
     (author)
   {% end %}
-  at {{r['ts'].strftime('%X on %x')}}
   {% if r['author'] == user %}
     </a>
   {% end %}
+  </th>
+  <th class='right'>
+    {{r['ts'].strftime('%x at %X')}}
   </th></tr>
   <tr class='review-body r{{r['id']}}'>
-  <td>{% raw markdown(r['review']) %}</td></tr>
+  <td colspan=2>{% raw markdown(r['review']) %}</td></tr>
 {% end %}
 </table>
 
