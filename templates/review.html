@@ -47,6 +47,13 @@
     float: right;
   }
   </style>
+  <script type="text/javascript">
+  function collapse(link, tag_id) {
+    var elem = document.getElementById(tag_id);
+    elem.style.display = (elem.style.display == 'none') ? 'initial' : 'none';
+    link.innerHTML = (link.innerHTML == '[+]') ? '[-]' : '[+]';
+  }
+  </script>
 </head>
 <body>
 <div id='pdf-viewer'>
@@ -93,6 +100,7 @@
   {% if r['author'] == user %}
     <a class='review-edit' href="/review?p={{paper['id']}}&r={{r['id']}}">
   {% end %}
+  <a href='#' onclick='collapse(this, "r{{r['id']}}");'>[-]</a>
   Review by
   {% if r['anon'] %}
     <i>anonymous</i>
@@ -104,7 +112,8 @@
     </a>
   {% end %}
   </th></tr>
-  <tr class='review-body'><td>{% raw markdown(r['review']) %}</td></tr>
+  <tr class='review-body' id="r{{r['id']}}">
+  <td>{% raw markdown(r['review']) %}</td></tr>
 {% end %}
 </table>
 
