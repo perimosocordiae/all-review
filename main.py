@@ -200,7 +200,6 @@ class LoginHandler(BaseHandler):
     username = self.get_argument('user')
     raw_password = self.get_argument('pw')
     displayname = self.get_argument('displayname')
-    email = self.get_argument('email')
     next_url = self.get_argument('next', '/')
     # Find a user with the given username
     user = DB_CONN.execute(
@@ -208,32 +207,46 @@ class LoginHandler(BaseHandler):
         (username,)).fetchone()
     if displayname:
       # This is a signup attempt.
-      if user:
-        logging.info('Signup failed due to username conflict: %r', username)
-        self.redirect('/login?next=%s&msg=%s' % (
-            url_escape(next_url), url_escape('Error: Username taken')))
-      elif len(username) > 50 or re.match(r'[^0-9a-z]', username, re.I):
-        logging.info('Signup failed due to invalid username: %r', username)
-        self.redirect('/login?next=%s&msg=%s' % (
-            url_escape(next_url), url_escape('Error: Invalid username')))
-      else:
-        logging.info('Signing up new user: %r', username)
-        with DB_CONN as c:
-          c.execute('INSERT INTO users VALUES (?, ?, ?, ?)',
-                    (username, email, displayname,
-                     bcrypt.hashpw(raw_password, bcrypt.gensalt())))
-        self.set_secure_cookie('user', username)
-        self.redirect(next_url)
+      self._do_signup(user, username, raw_password, displayname, next_url)
     else:
       # Regular login attempt.
-      if user and bcrypt.checkpw(raw_password, user['hashed_password']):
-        logging.info('Logging in user %r', username)
-        self.set_secure_cookie('user', username)
-        self.redirect(next_url)
-      else:
-        logging.info('Login failed for user %r', username)
-        self.redirect('/login?next=%s&msg=%s' % (
-            url_escape(next_url), url_escape('Error: Login failed')))
+      self._do_login(user, username, raw_password, next_url)
+
+  def _do_signup(self, existing_user, username, raw_password,
+                 displayname, next_url):
+    if existing_user:
+      logging.info('Signup failed due to username conflict: %r', username)
+      self._redirect_error(next_url, 'Error: Username taken')
+    elif not _valid_username(username):
+      logging.info('Signup failed due to invalid username: %r', username)
+      self._redirect_error(next_url, 'Error: Invalid username')
+    else:
+      email = self.get_argument('email')
+      logging.info('Signing up new user: %r', username)
+      with DB_CONN as c:
+        c.execute('INSERT INTO users VALUES (?, ?, ?, ?)',
+                  (username, email, displayname,
+                   bcrypt.hashpw(raw_password, bcrypt.gensalt())))
+      self.set_secure_cookie('user', username)
+      self.redirect(next_url)
+
+  def _do_login(self, existing_user, username, raw_password, next_url):
+    if (existing_user and
+        bcrypt.checkpw(raw_password, existing_user['hashed_password'])):
+      logging.info('Logging in user %r', username)
+      self.set_secure_cookie('user', username)
+      self.redirect(next_url)
+    else:
+      logging.info('Login failed for user %r', username)
+      self._redirect_error(next_url, 'Error: Login failed')
+
+  def _redirect_error(self, next_url, message):
+    self.redirect('/login?next=%s&msg=%s' % (url_escape(next_url),
+                                             url_escape(message)))
+
+
+def _valid_username(username):
+  return (0 < len(username) < 50) and re.match(r'[^0-9a-z]', username, re.I)
 
 
 class LogoutHandler(BaseHandler):
