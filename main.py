@@ -148,7 +148,7 @@ class ReviewHandler(BaseHandler):
     if not paper_id:
       return self.redirect('/')
     paper = DB_CONN.execute(
-        'SELECT id,title,anon,filename,displayname FROM papers, users '
+        'SELECT id,title,author,anon,filename,displayname FROM papers, users '
         'WHERE papers.author = users.username AND id = ?',
         (paper_id,)).fetchone()
     if not paper:

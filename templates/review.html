@@ -116,6 +116,9 @@
   {% else %}
     {{r['displayname']}}
   {% end %}
+  {% if paper['author'] == r['author'] %}
+    (author)
+  {% end %}
   at {{r['ts'].strftime('%X on %x')}}
   {% if r['author'] == user %}
     </a>
