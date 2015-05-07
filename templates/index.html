@@ -31,14 +31,13 @@
   <tr><th>Title</th><th>Author</th>
 {% for i, paper in enumerate(papers) %}
   <tr class="{{'even' if i%2==0 else 'odd'}}">
-    <td>{{paper['title']}}</td>
+    <td><a href="/review?p={{paper['id']}}">{{paper['title']}}</a></td>
     {% if paper['anon'] %}
       <td><i>anonymous</i></td>
     {% else %}
       <td>{{paper['displayname']}}</td>
     {% end %}
     <td>
-      <a class='btn' href="/review?p={{paper['id']}}">(re)view</a>
       {% if paper['author'] == user %}
         <a class='btn' href="/upload?p={{paper['id']}}">edit/delete</a>
       {% end %}
