@@ -46,12 +46,21 @@
     font-size: small;
     float: right;
   }
+  .collapser {
+    color: gray;
+  }
   </style>
   <script type="text/javascript">
-  function collapse(link, tag_id) {
-    var elem = document.getElementById(tag_id);
-    elem.style.display = (elem.style.display == 'none') ? 'initial' : 'none';
-    link.innerHTML = (link.innerHTML == '[+]') ? '[-]' : '[+]';
+  function collapse(cls) {
+    var tags = document.getElementsByClassName(cls);
+    var link = tags[0], elem = tags[1];
+    if (elem.style.display == 'none') {
+      elem.style.display = 'initial';
+      link.innerHTML = '[-]';
+    } else {
+      elem.style.display = 'none';
+      link.innerHTML = '[+]';
+    }
   }
   </script>
 </head>
@@ -97,10 +106,10 @@
 <table id='reviews'>
 {% for r in reviews %}
   <tr class='review-head'><th>
+  <a class='collapser r{{r['id']}}' href='javascript:collapse("r{{r['id']}}");'>[-]</a>
   {% if r['author'] == user %}
     <a class='review-edit' href="/review?p={{paper['id']}}&r={{r['id']}}">
   {% end %}
-  <a href='#' onclick='collapse(this, "r{{r['id']}}");'>[-]</a>
   Review by
   {% if r['anon'] %}
     <i>anonymous</i>
@@ -112,7 +121,7 @@
     </a>
   {% end %}
   </th></tr>
-  <tr class='review-body' id="r{{r['id']}}">
+  <tr class='review-body r{{r['id']}}'>
   <td>{% raw markdown(r['review']) %}</td></tr>
 {% end %}
 </table>
