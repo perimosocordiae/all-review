@@ -246,7 +246,7 @@ class LoginHandler(BaseHandler):
 
 
 def _valid_username(username):
-  return (0 < len(username) < 50) and re.match(r'[^0-9a-z]', username, re.I)
+  return 0 < len(username) < 50
 
 
 class LogoutHandler(BaseHandler):
