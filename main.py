@@ -269,15 +269,10 @@ def save_uploaded_file(f):
 
 
 def start_server(application, port):
-  socks = bind_sockets(port, 'localhost', family=socket.AF_INET)
-  port = socks[0].getsockname()[1]
-  loop = IOLoop.instance()
-  # TODO: enable HTTPS by supplying the ssl_options kwarg here
-  # http://stackoverflow.com/a/18307308/10601
-  server = HTTPServer(application, io_loop=loop)
-  server.add_sockets(socks)
-  server.start()
-  return loop, port
+  application.listen(port)
+  print 'Running at http://%s:%d/' % (socket.gethostname(), port)
+  print 'Press Ctrl+C to quit'
+  tornado.ioloop.IOLoop.instance().start()
 
 
 def initialize_db(dbname='reviews.db'):
@@ -312,9 +307,7 @@ def main():
       template_path=os.path.join(webserver_dir, 'templates'),
       login_url=r'/login',
       cookie_secret="635Blk29jgnp9ghnkjcSDF@$")
-  loop, port = start_server(application, options.port)
-  print 'Listening at http://localhost:%s/' % port
-  loop.start()
+  start_server(application, options.port)
 
 if __name__ == "__main__":
   main()
