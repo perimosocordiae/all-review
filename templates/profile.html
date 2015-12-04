@@ -1,0 +1,64 @@
+<html>
+<head>
+  <title>ALL-review</title>
+  <style type="text/css">
+  table { margin: auto; }
+  .error { color: red; }
+  input[type='text'] { width: 20em; }
+  input[type='submit'] { width: 100%; }
+  </style>
+</head>
+<body>
+<form action='/profile' method='post'>
+<table>
+<tr><th colspan=2>{{user['username']}}'s profile</th>
+
+<tr><td>Display name</td>
+<td><input type='text' name='displayname' value='{{user["displayname"]}}'/></td>
+</tr>
+
+<tr><td>Email</td>
+<td><input type='email' name='email' value='{{user["email"]}}'/></td>
+</tr>
+
+<tr><td>Current Password</td>
+<td><input type='password' name='pw' /></td>
+</tr>
+
+<tr><td>New Password</td>
+<td><input type='password' name='newpw' placeholder='leave unchanged'/></td>
+</tr>
+
+<tr><td colspan=2>
+  <input type='submit' name='upload' value='Update Profile' />
+</td></tr>
+
+<tr><td colspan=2><span class='error'>{{error}}</span></td></tr>
+
+</table>
+</form>
+
+<table id='papers'>
+  <caption>Uploaded Papers</caption>
+  <tr><th>Title</th><th>Anonymous?</th><th>Last Updated</th></tr>
+{% for p in papers %}
+  <tr>
+    <td><a href="/review?p={{p['id']}}">{{p['title']}}</a></td>
+    <td>{{'Yes' if p['anon'] else 'No'}}</td>
+    <td>{{p['ts'].strftime('%x at %X')}}</td>
+{% end %}
+</table>
+
+<table id='reviews'>
+  <caption>Reviews</caption>
+  <tr><th>Paper</th><th>Anonymous?</th><th>Last Updated</th></tr>
+{% for r in reviews %}
+  <tr>
+    <td><a href="/review?p={{r['reviews.pid']}}&r={{r['reviews.id']}}">{{r['papers.title']}}</a></td>
+    <td>{{'Yes' if r['reviews.anon'] else 'No'}}</td>
+    <td>{{r['reviews.ts'].strftime('%x at %X')}}</td>
+  </tr>
+{% end %}
+</table>
+</body>
+</html>

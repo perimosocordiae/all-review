@@ -4,15 +4,11 @@ import datetime
 import logging
 import markdown
 import os.path
-import re
 import socket
 import sqlite3
 import tornado.template
 import tornado.web
 from tornado.escape import url_escape
-from tornado.httpserver import HTTPServer
-from tornado.ioloop import IOLoop
-from tornado.netutil import bind_sockets
 from tornado.options import define, options, parse_command_line
 define('port', type=int, default=8888, help='Port to listen on')
 DB_CONN = None
@@ -131,6 +127,53 @@ class UploadHandler(BaseHandler):
     self.redirect('/')
 
 
+class ProfileHandler(BaseHandler):
+  def _render(self, error=''):
+    user = DB_CONN.execute(
+        'SELECT username,displayname,email FROM users '
+        'WHERE username = ? LIMIT 1', (self.current_user,)).fetchone()
+    if not user:
+      self.redirect('/')
+    papers = DB_CONN.execute(
+        'SELECT id,title,anon,ts FROM papers WHERE author = ? ORDER BY ts DESC',
+        (self.current_user,)).fetchall()
+    reviews = DB_CONN.execute(
+        'SELECT reviews.id,reviews.pid,papers.title,reviews.anon,reviews.ts '
+        'FROM papers, reviews WHERE papers.id = pid AND reviews.author = ? '
+        'ORDER BY reviews.ts DESC', (self.current_user,)).fetchall()
+    self.render('profile.html', user=user, papers=papers, reviews=reviews,
+                error=error)
+
+  @tornado.web.authenticated
+  def get(self):
+    self._render()
+
+  @tornado.web.authenticated
+  def post(self):
+    displayname = self.get_argument('displayname')
+    email = self.get_argument('email')
+    raw_password = self.get_argument('pw')
+    raw_new_password = self.get_argument('newpw')
+
+    user = DB_CONN.execute(
+        'SELECT hashed_password FROM users WHERE username = ? LIMIT 1',
+        (self.current_user,)).fetchone()
+    if not user or not bcrypt.checkpw(raw_password, user['hashed_password']):
+      logging.error('Invalid password for %s', self.current_user)
+      self._render(error='Incorrect password')
+      return
+    # update the user info
+    logging.info('Updating user data for %s', self.current_user)
+    with DB_CONN as c:
+      c.execute(
+          'UPDATE users SET displayname = ?, email = ? WHERE username = ?',
+          (displayname, email, self.current_user))
+      if raw_new_password:
+        hashed_new_password = bcrypt.hashpw(raw_new_password, bcrypt.gensalt())
+        c.execute('UPDATE users SET hashed_password = ? WHERE username = ?',
+                  (hashed_new_password, self.current_user))
+
+
 class ReviewHandler(BaseHandler):
   def _render(self, paper, reviews, review=None):
     user = DB_CONN.execute('SELECT displayname FROM users WHERE username = ?',
@@ -231,8 +274,8 @@ class LoginHandler(BaseHandler):
       self.redirect(next_url)
 
   def _do_login(self, existing_user, username, raw_password, next_url):
-    if (existing_user and
-        bcrypt.checkpw(raw_password, existing_user['hashed_password'])):
+    if existing_user and bcrypt.checkpw(raw_password,
+                                        existing_user['hashed_password']):
       logging.info('Logging in user %r', username)
       self.set_secure_cookie('user', username)
       self.redirect(next_url)
@@ -276,6 +319,11 @@ def start_server(application, port):
 
 
 def initialize_db(dbname='reviews.db'):
+  '''Informal DB Schema:
+    papers(id, title, filename, author, anon, ts)
+    reviews(id, pid, author, review, anon, ts)
+    users(username, email, displayname, hashed_password)
+  '''
   global DB_CONN
   resuming = os.path.exists(dbname)
   DB_CONN = sqlite3.connect(dbname, detect_types=sqlite3.PARSE_DECLTYPES)
@@ -301,6 +349,7 @@ def main():
       (r'/review', ReviewHandler),
       (r'/login', LoginHandler),
       (r'/logout', LogoutHandler),
+      (r'/profile', ProfileHandler),
       (r'/(.*\.pdf)', tornado.web.StaticFileHandler,
           dict(path=os.path.join(webserver_dir, 'papers'))),
   ],
