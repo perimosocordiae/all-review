@@ -128,12 +128,11 @@ class UploadHandler(BaseHandler):
 
 
 class ProfileHandler(BaseHandler):
-  def _render(self, message='', error=False):
-    user = DB_CONN.execute(
+  def _render(self, user_info=None, message='', error=False):
+    if user_info is None:
+      user_info = DB_CONN.execute(
         'SELECT username,displayname,email FROM users '
         'WHERE username = ? LIMIT 1', (self.current_user,)).fetchone()
-    if not user:
-      self.redirect('/')
     papers = DB_CONN.execute(
         'SELECT id,title,anon,ts FROM papers WHERE author = ? ORDER BY ts DESC',
         (self.current_user,)).fetchall()
@@ -141,7 +140,7 @@ class ProfileHandler(BaseHandler):
         'SELECT reviews.id,reviews.pid,papers.title,reviews.anon,reviews.ts '
         'FROM papers, reviews WHERE papers.id = pid AND reviews.author = ? '
         'ORDER BY reviews.ts DESC', (self.current_user,)).fetchall()
-    self.render('profile.html', user=user, papers=papers, reviews=reviews,
+    self.render('profile.html', user=user_info, papers=papers, reviews=reviews,
                 message=message, error=error)
 
   @tornado.web.authenticated
@@ -158,9 +157,11 @@ class ProfileHandler(BaseHandler):
     user = DB_CONN.execute(
         'SELECT hashed_password FROM users WHERE username = ? LIMIT 1',
         (self.current_user,)).fetchone()
-    if not user or not bcrypt.checkpw(raw_password, user['hashed_password']):
+    if not bcrypt.checkpw(raw_password, user['hashed_password']):
+      info = dict(displayname=displayname, email=email,
+                  username=self.current_user)
       logging.error('Invalid password for %s', self.current_user)
-      self._render(message='Incorrect password.', error=True)
+      self._render(user_info=info, message='Incorrect password.', error=True)
       return
     # update the user info
     logging.info('Updating user data for %s', self.current_user)

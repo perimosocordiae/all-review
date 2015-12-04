@@ -2,11 +2,12 @@
 <head>
   <title>ALL-review</title>
   <style type="text/css">
-  table { margin: auto; margin-top: 2em; }
-  caption { font-size: x-large; font-family: sans-serif; font-weight: bold; }
+  table { margin: auto; }
+  .heading { font-size: x-large; font-family: sans-serif; font-weight: bold; }
   .error { color: red; }
   input { width: 20em; }
   input[type='submit'] { width: 100%; }
+  caption { margin-top: 2em; }
   .btn {
     -webkit-appearance: push-button;
     box-sizing: border-box;
@@ -16,13 +17,17 @@
     border: 1px outset buttonface;
     padding: 2px 6px 3px;
   }
+  #header { text-align: center; }
   </style>
 </head>
 <body>
+<div style='text-align: center; margin-bottom: 2em'>
+  <span class='heading'>{{user['username']}}'s profile</span><br />
+  <a href='/'>Back to Papers</a> &mdash; <a href='/logout'>Log Out</a>
+</div>
+
 <form action='/profile' method='post'>
 <table>
-<caption>{{user['username']}}'s profile</caption>
-
 <tr><td>Display name</td>
 <td><input type='text' name='displayname' value='{{user["displayname"]}}'/></td>
 </tr>
@@ -53,7 +58,7 @@ class='error'
 </form>
 
 <table id='papers'>
-  <caption>Uploaded Papers</caption>
+  <caption class='heading'>Uploaded Papers</caption>
   <tr><th>Title</th><th>Last Updated</th><th></th></tr>
 {% for p in papers %}
   <tr>
@@ -67,7 +72,7 @@ class='error'
 </table>
 
 <table id='reviews'>
-  <caption>Reviews</caption>
+  <caption class='heading'>Reviews</caption>
   <tr><th>Reviewed Paper</th><th>Anonymous?</th><th>Last Updated</th><th></th></tr>
 {% for r in reviews %}
   <tr>
