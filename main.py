@@ -128,7 +128,7 @@ class UploadHandler(BaseHandler):
 
 
 class ProfileHandler(BaseHandler):
-  def _render(self, error=''):
+  def _render(self, message='', error=False):
     user = DB_CONN.execute(
         'SELECT username,displayname,email FROM users '
         'WHERE username = ? LIMIT 1', (self.current_user,)).fetchone()
@@ -142,7 +142,7 @@ class ProfileHandler(BaseHandler):
         'FROM papers, reviews WHERE papers.id = pid AND reviews.author = ? '
         'ORDER BY reviews.ts DESC', (self.current_user,)).fetchall()
     self.render('profile.html', user=user, papers=papers, reviews=reviews,
-                error=error)
+                message=message, error=error)
 
   @tornado.web.authenticated
   def get(self):
@@ -160,7 +160,7 @@ class ProfileHandler(BaseHandler):
         (self.current_user,)).fetchone()
     if not user or not bcrypt.checkpw(raw_password, user['hashed_password']):
       logging.error('Invalid password for %s', self.current_user)
-      self._render(error='Incorrect password')
+      self._render(message='Incorrect password.', error=True)
       return
     # update the user info
     logging.info('Updating user data for %s', self.current_user)
@@ -172,6 +172,7 @@ class ProfileHandler(BaseHandler):
         hashed_new_password = bcrypt.hashpw(raw_new_password, bcrypt.gensalt())
         c.execute('UPDATE users SET hashed_password = ? WHERE username = ?',
                   (hashed_new_password, self.current_user))
+    self._render(message='User data updated.')
 
 
 class ReviewHandler(BaseHandler):

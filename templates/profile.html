@@ -2,16 +2,26 @@
 <head>
   <title>ALL-review</title>
   <style type="text/css">
-  table { margin: auto; }
+  table { margin: auto; margin-top: 2em; }
+  caption { font-size: x-large; font-family: sans-serif; font-weight: bold; }
   .error { color: red; }
-  input[type='text'] { width: 20em; }
+  input { width: 20em; }
   input[type='submit'] { width: 100%; }
+  .btn {
+    -webkit-appearance: push-button;
+    box-sizing: border-box;
+    text-decoration: inherit;
+    color: buttontext;
+    background-color: buttonface;
+    border: 1px outset buttonface;
+    padding: 2px 6px 3px;
+  }
   </style>
 </head>
 <body>
 <form action='/profile' method='post'>
 <table>
-<tr><th colspan=2>{{user['username']}}'s profile</th>
+<caption>{{user['username']}}'s profile</caption>
 
 <tr><td>Display name</td>
 <td><input type='text' name='displayname' value='{{user["displayname"]}}'/></td>
@@ -26,37 +36,45 @@
 </tr>
 
 <tr><td>New Password</td>
-<td><input type='password' name='newpw' placeholder='leave unchanged'/></td>
+<td><input type='password' name='newpw' placeholder='leave blank to keep current password'/></td>
 </tr>
 
 <tr><td colspan=2>
   <input type='submit' name='upload' value='Update Profile' />
 </td></tr>
 
-<tr><td colspan=2><span class='error'>{{error}}</span></td></tr>
+<tr><td colspan=2><span
+{% if error %}
+class='error'
+{% end %}
+>{{message}}</span></td></tr>
 
 </table>
 </form>
 
 <table id='papers'>
   <caption>Uploaded Papers</caption>
-  <tr><th>Title</th><th>Anonymous?</th><th>Last Updated</th></tr>
+  <tr><th>Title</th><th>Last Updated</th><th></th></tr>
 {% for p in papers %}
   <tr>
-    <td><a href="/review?p={{p['id']}}">{{p['title']}}</a></td>
-    <td>{{'Yes' if p['anon'] else 'No'}}</td>
+    <td>
+      <a href="/review?p={{p['id']}}">{{p['title']}}</a>
+      {% if p['anon'] %}(anonymous){% end %}
+    </td>
     <td>{{p['ts'].strftime('%x at %X')}}</td>
+    <td><a class='btn' href="/upload?p={{p['id']}}">edit/delete</a></td>
 {% end %}
 </table>
 
 <table id='reviews'>
   <caption>Reviews</caption>
-  <tr><th>Paper</th><th>Anonymous?</th><th>Last Updated</th></tr>
+  <tr><th>Reviewed Paper</th><th>Anonymous?</th><th>Last Updated</th><th></th></tr>
 {% for r in reviews %}
   <tr>
-    <td><a href="/review?p={{r['reviews.pid']}}&r={{r['reviews.id']}}">{{r['papers.title']}}</a></td>
-    <td>{{'Yes' if r['reviews.anon'] else 'No'}}</td>
-    <td>{{r['reviews.ts'].strftime('%x at %X')}}</td>
+    <td><a href="/review?p={{r['pid']}}">{{r['title']}}</a></td>
+    <td>{{'Yes' if r['anon'] else 'No'}}</td>
+    <td>{{r['ts'].strftime('%x at %X')}}</td>
+    <td><a class='btn' href="/review?p={{r['pid']}}&r={{r['id']}}">edit/delete</a></td>
   </tr>
 {% end %}
 </table>
